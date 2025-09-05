@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ทดสอบ Mobile Keyboard - ระบบหวย</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { 
+                transform: translateY(100%); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+        }
+        
+        .input {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4 max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6 text-gray-900">ทดสอบ Mobile Keyboard</h1>
+        
+        <!-- Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">เพิ่มรายการหวย</h2>
+            
+            <div class="space-y-4">
+                <!-- ชื่อผู้ซื้อ -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ซื้อ</label>
+                    <div 
+                        id="buyer-name-input"
+                        class="input cursor-pointer bg-gray-50"
+                        onclick="openMobileKeyboard('buyer_name')"
+                    >
+                        <span id="buyer-name-value" class="text-gray-400">ชื่อผู้ซื้อ</span>
+                    </div>
+                </div>
+                
+                <!-- ประเภทหวย -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทหวย</label>
+                    <select id="lotto-type" class="input">
+                        <option value="2up">2 ตัวบน (อัตราจ่าย 70)</option>
+                        <option value="2down">2 ตัวล่าง (อัตราจ่าย 70)</option>
+                        <option value="3up">3 ตัวตรง (อัตราจ่าย 500)</option>
+                        <option value="runup">วิ่งบน (อัตราจ่าย 3)</option>
+                        <option value="rundown">วิ่งล่าง (อัตราจ่าย 3)</option>
+                    </select>
+                </div>
+                
+                <!-- เลขหวย -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เลขหวย</label>
+                    <div 
+                        id="lotto-number-input"
+                        class="input cursor-pointer bg-gray-50"
+                        onclick="openMobileKeyboard('lotto_number')"
+                    >
+                        <span id="lotto-number-value" class="text-gray-400">เลขหวย</span>
+                    </div>
+                </div>
+                
+                <!-- ราคา -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ราคา (บาท)</label>
+                    <div 
+                        id="price-input"
+                        class="input cursor-pointer bg-gray-50"
+                        onclick="openMobileKeyboard('price')"
+                    >
+                        <span id="price-value" class="text-gray-400">100 บาท</span>
+                    </div>
+                </div>
+                
+                <button class="btn-primary w-full">เพิ่มรายการ</button>
+            </div>
+        </div>
+        
+        <!-- ข้อมูลที่กรอก -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">ข้อมูลที่กรอก</h3>
+            <div class="space-y-2 text-sm">
+                <div>ชื่อผู้ซื้อ: <span id="display-buyer-name" class="font-medium">-</span></div>
+                <div>ประเภทหวย: <span id="display-lotto-type" class="font-medium">2 ตัวบน</span></div>
+                <div>เลขหวย: <span id="display-lotto-number" class="font-medium">-</span></div>
+                <div>ราคา: <span id="display-price" class="font-medium">100 บาท</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Keyboard Modal -->
+    <div id="mobile-keyboard" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl p-4 animate-slide-up">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="keyboard-title" class="text-lg font-semibold text-gray-900">กรอกข้อมูล</h3>
+                <button onclick="closeMobileKeyboard()" class="p-2 text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Current Input Display -->
+            <div class="mb-4">
+                <div class="bg-gray-100 rounded-lg p-4 text-center">
+                    <div id="current-input-display" class="text-2xl font-mono font-bold text-gray-900 min-h-[2rem]">
+                        <span class="text-gray-400">กรอกข้อมูล</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lottery Type Buttons (for buyer_name input) -->
+            <div id="lottery-type-buttons" class="mb-4 hidden">
+                <p class="text-sm text-gray-600 mb-2">เลือกประเภทการซื้อ:</p>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button onclick="addText('สามตัวบน')" class="bg-yellow-100 text-yellow-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 สามตัวบน
+                    </button>
+                    <button onclick="addText('สองตัวบน')" class="bg-orange-100 text-orange-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 สองตัวบน
+                    </button>
+                    <button onclick="addText('สองตัวล่าง')" class="bg-orange-100 text-orange-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 สองตัวล่าง
+                    </button>
+                    <button onclick="addText('วิ่งบน')" class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 วิ่งบน
+                    </button>
+                    <button onclick="addText('วิ่งล่าง')" class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 วิ่งล่าง
+                    </button>
+                    <button onclick="addText('ตรงโต๊ด')" class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
+                        🎯 ตรงโต๊ด
+                    </button>
+                </div>
+            </div>
+
+            <!-- Number Keypad -->
+            <div id="number-keypad" class="grid grid-cols-3 gap-3 mb-4 hidden">
+                <button onclick="addNumber('1')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">1</button>
+                <button onclick="addNumber('2')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">2</button>
+                <button onclick="addNumber('3')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">3</button>
+                <button onclick="addNumber('4')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">4</button>
+                <button onclick="addNumber('5')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">5</button>
+                <button onclick="addNumber('6')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">6</button>
+                <button onclick="addNumber('7')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">7</button>
+                <button onclick="addNumber('8')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">8</button>
+                <button onclick="addNumber('9')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">9</button>
+                <button onclick="clearInput()" class="bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium py-4 rounded-lg transition-colors">ล้างข้อมูล</button>
+                <button onclick="addNumber('0')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 text-xl font-semibold py-4 rounded-lg transition-colors">0</button>
+                <button onclick="backspace()" class="bg-gray-500 hover:bg-gray-600 text-white py-4 rounded-lg transition-colors flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Thai Keyboard -->
+            <div id="thai-keyboard" class="space-y-2 mb-4 hidden">
+                <div class="grid grid-cols-10 gap-1">
+                    <button onclick="addText('ก')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ก</button>
+                    <button onclick="addText('ข')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ข</button>
+                    <button onclick="addText('ค')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ค</button>
+                    <button onclick="addText('ง')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ง</button>
+                    <button onclick="addText('จ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">จ</button>
+                    <button onclick="addText('ฉ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฉ</button>
+                    <button onclick="addText('ช')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ช</button>
+                    <button onclick="addText('ซ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ซ</button>
+                    <button onclick="addText('ฌ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฌ</button>
+                    <button onclick="addText('ญ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ญ</button>
+                </div>
+                <div class="grid grid-cols-10 gap-1">
+                    <button onclick="addText('ด')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ด</button>
+                    <button onclick="addText('ต')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ต</button>
+                    <button onclick="addText('ถ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ถ</button>
+                    <button onclick="addText('ท')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ท</button>
+                    <button onclick="addText('ธ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ธ</button>
+                    <button onclick="addText('น')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">น</button>
+                    <button onclick="addText('บ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">บ</button>
+                    <button onclick="addText('ป')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ป</button>
+                    <button onclick="addText('ผ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ผ</button>
+                    <button onclick="addText('ฝ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฝ</button>
+                </div>
+                <div class="grid grid-cols-10 gap-1">
+                    <button onclick="addText('พ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">พ</button>
+                    <button onclick="addText('ฟ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฟ</button>
+                    <button onclick="addText('ภ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ภ</button>
+                    <button onclick="addText('ม')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ม</button>
+                    <button onclick="addText('ย')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ย</button>
+                    <button onclick="addText('ร')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ร</button>
+                    <button onclick="addText('ล')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ล</button>
+                    <button onclick="addText('ว')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ว</button>
+                    <button onclick="addText('ศ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ศ</button>
+                    <button onclick="addText('ษ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ษ</button>
+                </div>
+                <div class="grid grid-cols-10 gap-1">
+                    <button onclick="addText('ส')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ส</button>
+                    <button onclick="addText('ห')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ห</button>
+                    <button onclick="addText('ฬ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฬ</button>
+                    <button onclick="addText('อ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">อ</button>
+                    <button onclick="addText('ฮ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">ฮ</button>
+                    <button onclick="addText(' ')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">Space</button>
+                    <button onclick="addText('1')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">1</button>
+                    <button onclick="addText('2')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">2</button>
+                    <button onclick="addText('3')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">3</button>
+                    <button onclick="addText('4')" class="bg-gray-100 hover:bg-gray-200 text-gray-900 py-2 rounded text-sm">4</button>
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="clearInput()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded text-sm">ล้างข้อมูล</button>
+                    <button onclick="backspace()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded text-sm">ลบ</button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeMobileKeyboard()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-lg font-medium">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmInput()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '';
+        let currentValue = '';
+        let formData = {
+            buyer_name: '',
+            lotto_type: '2up',
+            lotto_number: '',
+            price: '100'
+        };
+
+        function openMobileKeyboard(inputType) {
+            currentInput = inputType;
+            currentValue = formData[inputType] || '';
+            
+            document.getElementById('mobile-keyboard').classList.remove('hidden');
+            
+            // Set title
+            const titles = {
+                'buyer_name': 'ชื่อผู้ซื้อ',
+                'lotto_number': 'เลขหวย',
+                'price': 'ราคา (บาท)'
+            };
+            document.getElementById('keyboard-title').textContent = titles[inputType];
+            
+            // Show appropriate keyboard
+            document.getElementById('lottery-type-buttons').classList.add('hidden');
+            document.getElementById('number-keypad').classList.add('hidden');
+            document.getElementById('thai-keyboard').classList.add('hidden');
+            
+            if (inputType === 'buyer_name') {
+                document.getElementById('lottery-type-buttons').classList.remove('hidden');
+                document.getElementById('thai-keyboard').classList.remove('hidden');
+            } else if (inputType === 'lotto_number' || inputType === 'price') {
+                document.getElementById('number-keypad').classList.remove('hidden');
+            }
+            
+            updateDisplay();
+        }
+
+        function closeMobileKeyboard() {
+            document.getElementById('mobile-keyboard').classList.add('hidden');
+            currentInput = '';
+            currentValue = '';
+        }
+
+        function addText(text) {
+            currentValue += text;
+            updateDisplay();
+        }
+
+        function addNumber(num) {
+            if (currentInput === 'lotto_number') {
+                const lottoType = document.getElementById('lotto-type').value;
+                const maxLength = (lottoType === 'runup' || lottoType === 'rundown') ? 1 :
+                                 (lottoType === '2up' || lottoType === '2down') ? 2 : 3;
+                
+                if (currentValue.length < maxLength) {
+                    currentValue += num;
+                }
+            } else {
+                currentValue += num;
+            }
+            updateDisplay();
+        }
+
+        function clearInput() {
+            currentValue = '';
+            updateDisplay();
+        }
+
+        function backspace() {
+            currentValue = currentValue.slice(0, -1);
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const display = document.getElementById('current-input-display');
+            if (currentValue) {
+                display.innerHTML = `<span class="text-gray-900">${currentValue}</span>`;
+            } else {
+                const placeholders = {
+                    'buyer_name': 'ชื่อผู้ซื้อ',
+                    'lotto_number': 'เลขหวย',
+                    'price': 'ราคา (บาท)'
+                };
+                display.innerHTML = `<span class="text-gray-400">${placeholders[currentInput]}</span>`;
+            }
+        }
+
+        function confirmInput() {
+            if (currentValue) {
+                formData[currentInput] = currentValue;
+                
+                // Update form display
+                if (currentInput === 'buyer_name') {
+                    document.getElementById('buyer-name-value').textContent = currentValue;
+                    document.getElementById('buyer-name-value').classList.remove('text-gray-400');
+                    document.getElementById('buyer-name-value').classList.add('text-gray-900');
+                    document.getElementById('display-buyer-name').textContent = currentValue;
+                    
+                    // Auto move to next field
+                    setTimeout(() => {
+                        closeMobileKeyboard();
+                        setTimeout(() => openMobileKeyboard('lotto_number'), 100);
+                    }, 100);
+                } else if (currentInput === 'lotto_number') {
+                    document.getElementById('lotto-number-value').textContent = currentValue;
+                    document.getElementById('lotto-number-value').classList.remove('text-gray-400');
+                    document.getElementById('lotto-number-value').classList.add('text-gray-900');
+                    document.getElementById('display-lotto-number').textContent = currentValue;
+                    
+                    // Auto move to next field
+                    setTimeout(() => {
+                        closeMobileKeyboard();
+                        setTimeout(() => openMobileKeyboard('price'), 100);
+                    }, 100);
+                } else if (currentInput === 'price') {
+                    document.getElementById('price-value').textContent = currentValue + ' บาท';
+                    document.getElementById('price-value').classList.remove('text-gray-400');
+                    document.getElementById('price-value').classList.add('text-gray-900');
+                    document.getElementById('display-price').textContent = currentValue + ' บาท';
+                    
+                    closeMobileKeyboard();
+                }
+            } else {
+                closeMobileKeyboard();
+            }
+        }
+
+        // Update lotto type display when changed
+        document.getElementById('lotto-type').addEventListener('change', function() {
+            const typeNames = {
+                '2up': '2 ตัวบน',
+                '2down': '2 ตัวล่าง',
+                '3up': '3 ตัวตรง',
+                'runup': 'วิ่งบน',
+                'rundown': 'วิ่งล่าง'
+            };
+            document.getElementById('display-lotto-type').textContent = typeNames[this.value];
+            formData.lotto_type = this.value;
+        });
+    </script>
+</body>
+</html>

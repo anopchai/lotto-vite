@@ -1,0 +1,6 @@
+version: "2"
+authtoken: 31oFpxg4CrclEGlCXFWTUm2dApc_29M6e2kSg7YMD6youhYER
+tunnels:
+  lotto-app:
+    addr: nginx:80
+    proto: http
