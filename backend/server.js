@@ -30,6 +30,36 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Function to remove 3straight_toad entries
+async function remove3StraightToadEntries() {
+  try {
+    const { promisePool } = require('./config/database');
+    
+    console.log('Removing 3straight_toad entries...');
+    
+    // Remove from tbl_setting
+    console.log('Attempting to remove 3straight_toad from tbl_setting...');
+    const [result1] = await promisePool.execute(
+      'DELETE FROM tbl_setting WHERE lotto_type = ?',
+      ['3straight_toad']
+    );
+    console.log(`Removed ${result1.affectedRows} 3straight_toad entries from tbl_setting`);
+    
+    // Update tickets from 3straight_toad to 3toad
+    console.log('Attempting to update tickets from 3straight_toad to 3toad...');
+    const [result2] = await promisePool.execute(
+      'UPDATE tbl_ticket SET lotto_type = ? WHERE lotto_type = ?',
+      ['3toad', '3straight_toad']
+    );
+    console.log(`Updated ${result2.affectedRows} tickets from 3straight_toad to 3toad`);
+    
+    console.log('3straight_toad entries removal completed');
+  } catch (error) {
+    console.error('Error removing 3straight_toad entries:', error.message);
+    console.error('Error stack:', error.stack);
+  }
+}
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
@@ -74,7 +104,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   // Only log startup info in development
   if (process.env.NODE_ENV === 'development') {
     console.log(`🚀 Server running on port ${PORT}`);
@@ -82,4 +112,7 @@ app.listen(PORT, () => {
     console.log(`🌐 API URL: http://localhost:${PORT}/api`);
     console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
   }
+  
+  // Remove 3straight_toad entries
+  await remove3StraightToadEntries();
 });

@@ -64,21 +64,41 @@ const SettingsPage = () => {
     }
   }
 
-
-
   const saveSettings = async (data) => {
     setLoading(true)
     try {
-      const settingsData = Object.keys(data).map(lottoType => ({
-        lotto_type: lottoType,
-        payout_rate: parseInt(data[lottoType])
-      }))
+      // Convert the form data to the expected format and ensure proper data types
+      const settingsData = Object.keys(data)
+        .filter(lottoType => {
+          // Filter out invalid lotto types
+          const validTypes = ['2up', '2down', '3up', '3toad', 'runup', 'rundown']
+          return validTypes.includes(lottoType)
+        })
+        .map(lottoType => ({
+          lotto_type: lottoType,
+          payout_rate: parseInt(data[lottoType], 10)
+        }))
+
+      // Validate that all payout rates are positive integers
+      const isValid = settingsData.every(setting => 
+        Number.isInteger(setting.payout_rate) && setting.payout_rate > 0
+      )
+
+      if (!isValid) {
+        toast.error('กรุณากรอกอัตราจ่ายให้ถูกต้อง (ต้องเป็นจำนวนเต็มบวก)')
+        setLoading(false)
+        return
+      }
+
+      // Log the data being sent for debugging
+      console.log('Sending settings data:', { settings: settingsData })
 
       await settingsAPI.updateMultiple({ settings: settingsData })
       toast.success('บันทึกการตั้งค่าสำเร็จ')
       loadSettings()
     } catch (error) {
-      toast.error('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า')
+      console.error('Save settings error:', error)
+      toast.error('เกิดข้อผิดพลาดในการบันทึกการตั้งค่า: ' + (error.response?.data?.message || error.message))
     } finally {
       setLoading(false)
     }

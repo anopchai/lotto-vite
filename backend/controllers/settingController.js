@@ -112,7 +112,10 @@ const updateMultipleSettings = async (req, res) => {
     try {
         const { settings } = req.body;
         
+        console.log('Received settings data:', req.body);
+        
         if (!settings || !Array.isArray(settings) || settings.length === 0) {
+            console.log('Invalid settings data:', settings);
             return res.status(400).json({
                 success: false,
                 message: 'ข้อมูลการตั้งค่าไม่ถูกต้อง'
@@ -123,19 +126,31 @@ const updateMultipleSettings = async (req, res) => {
         
         // ตรวจสอบข้อมูลแต่ละรายการ
         for (const setting of settings) {
+            console.log('Validating setting:', setting);
+            
             if (!validTypes.includes(setting.lotto_type)) {
+                console.log('Invalid lotto type:', setting.lotto_type);
                 return res.status(400).json({
                     success: false,
                     message: `ประเภทหวย ${setting.lotto_type} ไม่ถูกต้อง`
                 });
             }
             
-            if (!setting.payout_rate || !Number.isInteger(setting.payout_rate) || setting.payout_rate <= 0) {
+            // Convert payout_rate to integer if it's a string
+            const payoutRate = typeof setting.payout_rate === 'string' 
+                ? parseInt(setting.payout_rate, 10) 
+                : setting.payout_rate;
+            
+            if (!payoutRate || !Number.isInteger(payoutRate) || payoutRate <= 0) {
+                console.log('Invalid payout rate:', setting.payout_rate, 'Type:', typeof setting.payout_rate, 'Converted:', payoutRate);
                 return res.status(400).json({
                     success: false,
                     message: `อัตราจ่ายสำหรับ ${setting.lotto_type} ต้องเป็นจำนวนเต็มบวก`
                 });
             }
+            
+            // Update the setting with the converted value
+            setting.payout_rate = payoutRate;
         }
         
         const result = await Setting.updateMultipleSettings(settings);
