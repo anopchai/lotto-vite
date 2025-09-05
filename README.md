@@ -1,3 +1,4 @@
+
 # Lotto Vite System
 
 An online lottery sales platform built with React 18 + Vite + Tailwind CSS (Frontend) and Node.js + Express + MySQL (Backend).
